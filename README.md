@@ -19,7 +19,7 @@ See readme file in server folder to know requirements for building it.
 
 Client side is based on SDL2.
 it could be multiplaform, but I have only tested it on linux.
-See readme file on client folder to know requirement for building it.
+See build.sh file in client folder to know requirements for building it.
 
 ```bash
  # in client folder : 
