@@ -1,3 +1,4 @@
+
 // remote desktop sdl client
 #ifdef __MINGW32__
 #undef main /* Prevents SDL from overriding main() */
@@ -8,8 +9,6 @@
 #include "config.h"
 #include "network.h"
 #include "input.h"
-#include "video_decoder.h"
-#include "video_surface.h"
 #include "keysym_converter.h"
 
 //memset(inbuf+INBUF_SIZE, 0, FF_INPUT_BUFFER_PADDING_SIZE);
@@ -17,13 +16,8 @@
 
 int main(int argc, char *argv[]) 
 {
-
 	// Declare display mode structure to be filled in.
 	SDL_DisplayMode current;
-
-
-
-
 
 	// set log level
 
@@ -54,7 +48,7 @@ int main(int argc, char *argv[])
 
 	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"init() \n");
 
-	configuration->server->hostname = strdup(argv[1]);
+	configuration->server->hostname = argv[1];
 	configuration->server->port = atoi(argv[2]);
 	char *video_definition = argv[3];
 
@@ -142,22 +136,15 @@ int main(int argc, char *argv[])
 
 void SRD_start_video()
 {
-	thread = SDL_CreateThread(video_thread, "video_thread", configuration);
 	SRDNet_send_start_packet();
 }
 
 void SRD_init_renderer(Configuration* configuration)
 {
-	SRD_init_renderer_texture(configuration->codec->width, configuration->codec->height);
-	init_video_decoder(configuration->codec->width, configuration->codec->height);
-
-
 }
 
 void SRD_close_renderer(Configuration* configuration)
 {
-	destroy_decoder();
-	destroy_texture();
 }
 
 void SRD_exit()
@@ -165,35 +152,6 @@ void SRD_exit()
 	exit(1);
 }
 
-int video_thread(void* configuration) 
-{
-	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Starting video thread");	
-	SRD_init_renderer(configuration);
-
-	close_video_thread = false;
-	while(close_video_thread == false)
-	{
-		av_init_packet(&packet);
-
-
-		Video_Frame* frame = pop_from_video_fifo();
-		if(frame != NULL)
-		{
-		
-			SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "frame number : %d, frame size : %d", frame->number, frame->length);
-			decode_video_frame(frame->data, frame->length, configuration); 
-			update_video_surface(); 
-			free(frame);
-
-		}
-
-	}
-//	SRDNet_Empty_input_buffer();
-	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "finish and cleaning video thread");
-	SRD_close_renderer(configuration);
-
-	return 0;
-}
 
 
 

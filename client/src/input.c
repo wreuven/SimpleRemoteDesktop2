@@ -17,7 +17,7 @@ void get_input_event()
 				    break;
 
 			    case SDL_KEYDOWN: 
-				    //printf("pressed key %d\n", userEvent.key.keysym.sym);
+				    printf("pressed key %d\n", userEvent.key.keysym.sym);
 				    send.type = TYPE_KEY_DOWN;
 				    if(userEvent.key.keysym.sym == 1073742048){
 					    ctrl_press = true;
@@ -105,19 +105,19 @@ void get_input_event()
 							       send.type = TYPE_MOUSE_UP;
 							       switch(userEvent.button.button) {
 								       case SDL_BUTTON_LEFT: {
-												     //printf("left click released\n");
+												     printf("left click released\n");
 												     send.button = 1;
 												     SDLNet_TCP_Send(control_socket, (void * )&send, sizeof(send));
 												     break;
 											     }
 								       case SDL_BUTTON_RIGHT: {
-												      //printf("right click released\n");
+												      printf("right click released\n");
 												      send.button = 3;
 												      SDLNet_TCP_Send(control_socket, (void * )&send, sizeof(send));
 												      break;
 											      }
 								       case SDL_BUTTON_MIDDLE: {
-												       //printf("middle click released\n");
+												       printf("middle click released\n");
 												       send.button = 2;
 												       SDLNet_TCP_Send(control_socket, (void * )&send, sizeof(send));
 												       break;
