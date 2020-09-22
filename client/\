@@ -44,7 +44,6 @@ int init_network()
 		 SDL_LogError(SDL_LOG_CATEGORY_ERROR,"SDLNet_TCP_Open: %s\n", SDLNet_GetError());
 		return 0;
 	}
-	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "connected to server");
 	
 	netThread = SDL_CreateThread(network_thread, "network_thread", configuration);
 	return 0;
@@ -52,8 +51,6 @@ int init_network()
 
 int SRDNet_send_start_packet() 
 {
-	int len;
-
 	// inital packet with information
 	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, " network : sending start packet");
 	struct Message init;
@@ -68,8 +65,8 @@ int SRDNet_send_start_packet()
 	init.bandwidth = configuration->bandwidth;
 	init.sdl = 0;
 	SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "sending init frame : type: %d, fps: %d, codec width: %d, codec height: %d, bandwidth: %d", init.type, init.fps, init.codec_width, init.codec_height, init.bandwidth);
-	len = SDLNet_TCP_Send(control_socket, (void * )&init, sizeof(init));
-	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "network : sent start packet (%d bytes)", len);
+	SDLNet_TCP_Send(control_socket, (void * )&init, sizeof(init));
+	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, " network : sent start packet");
 	return 0;
 
 }
@@ -115,7 +112,7 @@ int SRD_readUInt32()
 	uint8_t *data = SRD_read(4);
 	SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, " %x %x %x %x \n", data[0], data[1], data[2], data[3]);
 	uint32_t num = 
-		(uint32_t) data[0] << 24 |
+		(uint32_t)data[0] << 24 |
 		(uint32_t) data[1] << 16 |
 		(uint32_t) data[2] << 8  |
 		(uint32_t) data[3];
@@ -140,15 +137,6 @@ uint8_t *SRD_read(int nbytes)
 	return data;
 }
 
-int SRD_read2(uint8_t *ptr, int nbytes)
-{
-  return (SDLNet_TCP_Recv(control_socket, ptr, nbytes));
-}
-
-void video_terminate();
-int  video_init();
-void video_feed();
-
 int network_thread(void* configuration) 
 {
 	static Video_Frame _frame;
@@ -156,13 +144,10 @@ int network_thread(void* configuration)
 
 	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "starting network thread");
 
-	video_init();
-	video_feed();
-
 	while(true) 
 	{
 		
-		SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "network: reading frame");
+		SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "reading frame");
 
 		// get frame from network
 		frame->number =  SRDNet_get_frame_number();
@@ -177,14 +162,26 @@ int network_thread(void* configuration)
 
 		static char* filename = "/tmp/out.h264";
 		if (len >= 0) {
-			SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "initializing fifo");
+
+			printf("initializing fifo\n");
+
 			if (fd < 0) {
+#ifdef FIFO
 				int retval = remove(filename);
 				mkfifo(filename, 0666);
 				fd = open(filename, O_WRONLY, 0666);
+#else
+				int retval;
+				retval = remove(filename);
+				retval = _sopen_s(&fd, filename, O_WRONLY | O_CREAT | O_BINARY, _SH_DENYNO, _S_IREAD | _S_IWRITE);
+#endif
 			}
 			ret = _write(fd, frame->data, frame->length);
 			len += frame->length;
+			if (len > 1 * 1024 * 1024) {
+					_close(fd);
+				len = -1;
+			}
 		}
 	}
 }
