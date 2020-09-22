@@ -37,10 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN(x,y) (((x) < (y)) ? (x) : (y))
 
 OMX_VIDEO_PARAM_PORTFORMATTYPE format;
-OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
-COMPONENT_T* video_decode = NULL, * video_scheduler = NULL, * video_render = NULL, *vclock = NULL;
-COMPONENT_T* list[5];
-TUNNEL_T tunnel[4];
+COMPONENT_T* video_decode = NULL, * video_render = NULL;
+COMPONENT_T* list[2];
+TUNNEL_T tunnel[1];
 ILCLIENT_T* client;
 int status = 0;
 unsigned int data_len = 0;
@@ -90,12 +89,10 @@ int video_feed() {
 
     while ((buf = ilclient_get_input_buffer(video_decode, 130, 1)) != NULL)
     {
-	printf("Got Decode Buffer\n");
         // feed data and wait until we get port settings changed
         unsigned char* dest = buf->pBuffer;
 
 	if (frame_len == 0) {
-		printf("Getting Frame Header\n");
 		int number	=  SRDNet_get_frame_number();
 		frame_len  	=  SRDNet_get_frame_length();
 		printf("%d:%d\n", number, frame_len);
@@ -103,9 +100,7 @@ int video_feed() {
 
 	int bytes_to_read = MIN(buf->nAllocLen, frame_len); 
 
-	printf("Getting Frame Data\n");
         int bytes_read    = SRD_read2(dest, bytes_to_read);
-	printf("Got Frame Data\n");
 
 	frame_len -= bytes_read;
 
@@ -119,16 +114,8 @@ int video_feed() {
         {
             port_settings_changed = 1;
 
-            if (ilclient_setup_tunnel(tunnel, 0, 0) != 0)
-            {
-                status = -7;
-                break;
-            }
-
-            ilclient_change_component_state(video_scheduler, OMX_StateExecuting);
-
             // now setup tunnel to video_render
-            if (ilclient_setup_tunnel(tunnel + 1, 0, 1000) != 0)
+            if (ilclient_setup_tunnel(tunnel, 0, 0) != 0)
             {
                 status = -12;
                 break;
@@ -156,7 +143,7 @@ int video_feed() {
             status = -6;
             break;
         }
-	printf("Wait for Decode Buffer\n");
+
     }
 
     return 0;
@@ -190,33 +177,43 @@ int video_init(char* filename)
         status = -14;
     list[1] = video_render;
 
-    // create clock
-    if (status == 0 && ilclient_create_component(client, &vclock, "clock", ILCLIENT_DISABLE_ALL_PORTS) != 0)
-        status = -14;
-    list[2] = vclock;
+    set_tunnel(tunnel, video_decode, 131,  video_render, 90);
 
-    memset(&cstate, 0, sizeof(cstate));
-    cstate.nSize = sizeof(cstate);
-    cstate.nVersion.nVersion = OMX_VERSION;
-    cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
-    cstate.nWaitMask = 1;
-    if (vclock != NULL && OMX_SetParameter(ILC_GET_HANDLE(vclock), OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone)
-        status = -13;
+    OMX_CONFIG_LATENCYTARGETTYPE latencyTarget;
+    memset(&latencyTarget, 0, sizeof(OMX_CONFIG_LATENCYTARGETTYPE));
+    latencyTarget.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+    latencyTarget.nVersion.nVersion = OMX_VERSION;
+    latencyTarget.nPortIndex = 90;
+    latencyTarget.bEnabled = OMX_TRUE;
+    latencyTarget.nFilter = 2;
+    latencyTarget.nTarget = 4000;
+    latencyTarget.nShift = 3;
+    latencyTarget.nSpeedFactor = -135;
+    latencyTarget.nInterFactor = 500;
+    latencyTarget.nAdjCap = 20;
 
-    // create video_scheduler
-    if (status == 0 && ilclient_create_component(client, &video_scheduler, "video_scheduler", ILCLIENT_DISABLE_ALL_PORTS) != 0)
-        status = -14;
-    list[3] = video_scheduler;
+    if(OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone) {
+        fprintf(stderr, "Failed to set video render latency parameters\n");
+        exit(EXIT_FAILURE);
+    }
 
-    set_tunnel(tunnel, video_decode, 131, video_scheduler, 10);
-    set_tunnel(tunnel + 1, video_scheduler, 11, video_render, 90);
-    set_tunnel(tunnel + 2, vclock, 80, video_scheduler, 12);
 
-    // setup clock tunnel first
-    if (status == 0 && ilclient_setup_tunnel(tunnel + 2, 0, 0) != 0)
-        status = -15;
-    else
-        ilclient_change_component_state(vclock, OMX_StateExecuting);
+   {
+	   OMX_CONFIG_DISPLAYREGIONTYPE region;
+	   memset(&region, 0, sizeof(OMX_CONFIG_DISPLAYREGIONTYPE));
+	   region.nSize = sizeof(OMX_CONFIG_DISPLAYREGIONTYPE);
+	   region.nVersion.nVersion = OMX_VERSION;
+	   region.nPortIndex = 90;
+	   region.layer = 2;
+	   region.set |= OMX_DISPLAY_SET_LAYER;
+    	   region.fullscreen = OMX_TRUE;
+    	   region.mode = OMX_DISPLAY_SET_FULLSCREEN;
+	   if (OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigDisplayRegion, &region) != OMX_ErrorNone) {
+	        fprintf(stderr, "Failed to set video render region parameters\n");
+	        exit(EXIT_FAILURE);
+	   }
+		
+   }
 
     if (status == 0)
         ilclient_change_component_state(video_decode, OMX_StateIdle);
