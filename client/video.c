@@ -185,10 +185,10 @@ int video_init(char* filename)
     latencyTarget.nVersion.nVersion = OMX_VERSION;
     latencyTarget.nPortIndex = 90;
     latencyTarget.bEnabled = OMX_TRUE;
-    latencyTarget.nFilter = 2;
-    latencyTarget.nTarget = 4000;
-    latencyTarget.nShift = 3;
-    latencyTarget.nSpeedFactor = -135;
+    latencyTarget.nFilter = 1;
+    latencyTarget.nTarget = 0;
+    latencyTarget.nShift = 7;
+    latencyTarget.nSpeedFactor = 512;
     latencyTarget.nInterFactor = 500;
     latencyTarget.nAdjCap = 20;
 
