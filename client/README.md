@@ -8,16 +8,7 @@ ubuntu package :
 ```bash
 sudo apt-get install build-essential libavutil-dev libavcodec-dev libswscale-dev libx264-dev libsdl2-dev libsdl2-net-dev libavformat-dev
 ```
-windows : 
-```bash
-sudo apt-get install mingw-w64
-```
 
-## build for windows
-64bit system use Makefile_64bit_window_platform file. 
-32bit system use Makefile
-
-Type make cmd will generate the client.exe
 
 ## run the client
 copy the zip file into windows machine and run client.exe
