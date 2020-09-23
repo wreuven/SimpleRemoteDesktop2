@@ -46,6 +46,11 @@ int init_network()
 	}
 	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "connected to server");
 	
+	int len = 1048576;
+	if (setsockopt(control_socket.channel, SOL_SOCKET, SO_RCVBUF, &len, sizeof(int)) == -1) {
+    		fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
+	}
+	
 	netThread = SDL_CreateThread(network_thread, "network_thread", configuration);
 	return 0;
 }
