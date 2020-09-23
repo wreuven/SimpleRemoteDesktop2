@@ -8,7 +8,8 @@ ubuntu package :
 ```bash
 sudo apt-get install build-essential libavutil-dev libavcodec-dev libswscale-dev libx264-dev libsdl2-dev libsdl2-net-dev libavformat-dev
 ```
-## run the client
+## build the client
+
 ```cd client
 ./build.sh
 ```
