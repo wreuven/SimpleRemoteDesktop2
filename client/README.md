@@ -11,7 +11,6 @@ sudo apt-get install build-essential libavutil-dev libavcodec-dev libswscale-dev
 
 
 ## run the client
-copy the zip file into windows machine and run client.exe
 
 ```bash
 ./client hostname port 720p 10000000 30
