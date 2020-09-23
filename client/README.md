@@ -10,7 +10,8 @@ sudo apt-get install build-essential libavutil-dev libavcodec-dev libswscale-dev
 ```
 ## build the client
 
-```cd client
+```
+cd client
 ./build.sh
 ```
 
