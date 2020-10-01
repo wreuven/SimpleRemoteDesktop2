@@ -178,6 +178,8 @@ int video_init(char* filename)
     list[1] = video_render;
 
     set_tunnel(tunnel, video_decode, 131,  video_render, 90);
+	
+    // I copied this config from somehwere. I don't think it is doing anything.
 
     OMX_CONFIG_LATENCYTARGETTYPE latencyTarget;
     memset(&latencyTarget, 0, sizeof(OMX_CONFIG_LATENCYTARGETTYPE));
@@ -199,6 +201,8 @@ int video_init(char* filename)
 
 
    {
+           // I copied this config from somehwere. I was expecting full screen but not working.
+
 	   OMX_CONFIG_DISPLAYREGIONTYPE region;
 	   memset(&region, 0, sizeof(OMX_CONFIG_DISPLAYREGIONTYPE));
 	   region.nSize = sizeof(OMX_CONFIG_DISPLAYREGIONTYPE);
