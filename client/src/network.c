@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 #define _write write
 #define _close close
@@ -47,7 +49,12 @@ int init_network()
 	SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "connected to server");
 	
 	int len = 1048576;
-	if (setsockopt(control_socket.channel, SOL_SOCKET, SO_RCVBUF, &len, sizeof(int)) == -1) {
+
+struct _Internals {
+    int ready;
+    int channel;
+};
+	if (setsockopt( ((struct _Internals *)control_socket)->channel, SOL_SOCKET, SO_RCVBUF, &len, sizeof(int)) == -1) {
     		fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
 	}
 	

@@ -1,19 +1,9 @@
 // remote desktop sdl client
 #include <stdbool.h>
-#include<stdint.h>
-#include<time.h>
+#include <stdint.h>
+#include <time.h>
 #include <stdio.h>
 
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
-
-AVPacket        packet;
-AVCodecContext  *pCodecCtx;
-AVFrame         *pFrame;
-AVCodecParserContext *parser;
-AVFormatContext *pFormatCtx;
-struct SwsContext *sws_ctx;
 // FIXME remove all NULL => must be restore
 
 Uint8 *yPlane, *uPlane, *vPlane;
